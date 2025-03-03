@@ -1,5 +1,5 @@
-import User from '../models/User';
-import Book from '../models/Book';
+import User from '../models/User.js';
+import Book from '../models/Book.js';
 
 const cleanDB = async (): Promise<void> => {
     try {

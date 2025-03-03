@@ -1,9 +1,9 @@
 import db from '../config/connection.js';
 import userSeeds from './userData.json' with { type: "json" };
 import bookSeeds from './bookData.json' with { type: "json" };
-import User from '../models/User';
-import Book from '../models/Book';
-import cleanDB from './cleanDB';
+import User from '../models/User.js';
+import Book from '../models/Book.js';
+import cleanDB from './cleanDB.js';
 
 const seedDatabase = async (): Promise<void> => {
     try {
@@ -12,7 +12,6 @@ const seedDatabase = async (): Promise<void> => {
 
         await User.insertMany(userSeeds);
         await Book.insertMany(bookSeeds);
-
 
         console.log('Seeding completed successfully!');
         process.exit(0);

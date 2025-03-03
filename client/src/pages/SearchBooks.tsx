@@ -9,8 +9,22 @@ import {
   Row
 } from 'react-bootstrap';
 
+async function useMutation(bookToSave: Book, token: string) {
+  const response = await fetch('/api/books', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(bookToSave),
+  });
+
+  return response;
+}
+
+
 import Auth from '../utils/auth';
-import { saveBook, searchGoogleBooks } from '../utils/API';
+import {/* saveBook ,*/ searchGoogleBooks } from '../utils/API';
 import { saveBookIds, getSavedBookIds } from '../utils/localStorage';
 import type { Book } from '../models/Book';
 import type { GoogleAPIBook } from '../models/GoogleAPIBook';
@@ -75,7 +89,7 @@ const SearchBooks = () => {
     }
 
     try {
-      const response = await saveBook(bookToSave, token);
+      const response = await useMutation(bookToSave, token);
 
       if (!response.ok) {
         throw new Error('something went wrong!');
@@ -155,3 +169,4 @@ const SearchBooks = () => {
 };
 
 export default SearchBooks;
+
