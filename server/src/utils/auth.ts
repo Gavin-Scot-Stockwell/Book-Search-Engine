@@ -4,53 +4,73 @@ import dotenv from 'dotenv';
 
 // Load environment variables
 dotenv.config();
-console.log('JWT_SECRET_KEY:', process.env.JWT_SECRET_KEY);
+const secretKey = process.env.JWT_SECRET_KEY;
+if (!secretKey) {
+    throw new Error('JWT_SECRET_KEY is not defined in environment variables');
+}
+console.log('JWT_SECRET_KEY loaded:', "--> " + secretKey + " <--" + " is the name of the secret key");
 
 // Function to authenticate the token
-export const authenticateToken = ({ req }: any) => {
-    // Allows token to be sent via req.body, req.query, or headers
+export const authenticateToken = ({ req }: { req: any }) => {
     let token = req.body.token || req.query.token || req.headers.authorization;
 
-    // Log the token received from different sources
-    console.log('Token from body:', req.body.token);
-    console.log('Token from query:', req.query.token);
-    console.log('Token from headers:', req.headers.authorization);
+    console.log('Received token from body:', req.body.token);
+    console.log('Received token from query:', req.query.token);
+    console.log('Received token from headers:', req.headers.authorization);
 
-    // If the token is sent in the authorization header, extract the token from the header
-    if (req.headers.authorization) {
-        token = token.split(' ').pop().trim();
-        console.log('Extracted token from headers:', token);
+    // Extract token if in Authorization header
+    if (req.headers.authorization?.startsWith('Bearer ')) {
+        token = req.headers.authorization.split(' ')[1];
+        console.log('Extracted token from Authorization header:', token);
     }
 
-    // If no token is provided, return the request object as is
+    // Check for token in HTTP-only cookies (more secure)
+    if (!token && req.cookies?.token) {
+        token = req.cookies.token;
+        console.log('Extracted token from HTTP-only cookie');
+    }
+
     if (!token) {
         console.log('No token provided');
         return req;
     }
 
-    // Try to verify the token
     try {
-        const { data }: any = jwt.verify(token, process.env.JWT_SECRET_KEY || '', { maxAge: '2hr' });
-        // If the token is valid, attach the user data to the request object
+        const { data }: any = jwt.verify(token, secretKey, { maxAge: '2h' });
         req.user = data;
         console.log('Token verified, user data:', data);
-    } catch (err) {
-        // If the token is invalid, log an error message
-        console.log('Invalid token', err);
+    } catch (err: any) {
+        if (err.name === 'TokenExpiredError') {
+            console.log('Token expired');
+        } else if (err.name === 'JsonWebTokenError') {
+            console.log('Invalid token signature');
+        } else {
+            console.log('JWT verification error:', err.message);
+        }
     }
 
-    // Return the request object
     return req;
 };
 
 // Function to sign a token
 export const signToken = (username: string, email: string, _id: unknown) => {
-    // Create a payload with the user information
     const payload = { username, email, _id };
-    const secretKey: any = process.env.JWT_SECRET_KEY; // Get the secret key from environment variables
 
-    // Sign the token with the payload and secret key, and set it to expire in 2 hours
-    return jwt.sign({ data: payload }, secretKey, { expiresIn: '2h' });
+    //console.log('Generated token:', token); // Log the generated token
+    console.log('Token payload:', payload); // Log the payload used to generate the token
+    return jwt.sign({ data: payload }, secretKey, { expiresIn: '20h' });
+
+};
+
+// Function to set the token as an HTTP-only cookie
+export const setAuthCookie = (res: any, token: string) => {
+    res.cookie('token', token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'Strict',
+        maxAge: 2 * 60 * 60 * 1000, // 2 hours
+    });
+    console.log('Auth token set in HTTP-only cookie');
 };
 
 // Custom error class for authentication errors

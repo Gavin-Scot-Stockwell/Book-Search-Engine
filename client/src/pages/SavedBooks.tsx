@@ -12,7 +12,11 @@ import { useMutation } from '@apollo/client';
 import { removeBookId } from '../utils/localStorage';
 import type { User } from '../models/User';
 
+
+
+
 const SavedBooks = () => {
+  const { data } = useQuery(QUERY_ME);
   const [userData, setUserData] = useState<User>({
     username: '',
     email: '',
@@ -20,28 +24,14 @@ const SavedBooks = () => {
     savedBooks: [],
   });
 
+  if (data?.me && data.me !== userData) {
+    setUserData(data.me);
+  }
+
 
   // Instead, use the useQuery() hook to execute the GET_ME 
   // query on load and save it to a variable named userData.
 
-
-
-  const { loading, data } = useQuery(QUERY_ME , {
-    variables: { id: userData },
-  });
-  
-if(loading) {
-  return <h2>LOADING...</h2>
-} else if (data) {
-  return (
-  <div>
-      <li>{userData.username}</li>
-      <li>{userData.email}</li>
-     
-  </div>
-  
-  )
-}
 
 
 

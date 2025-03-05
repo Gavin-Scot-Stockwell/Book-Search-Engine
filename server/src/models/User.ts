@@ -1,13 +1,21 @@
 import { Schema, model, type Document } from 'mongoose';
 import bcrypt from 'bcrypt';
-import type { BookDocument } from './Book.js';
+import type Book from './Book.js';
 
+export interface Book extends Document {
+  bookId: string;
+  title: string;
+  authors: string[];
+  description: string;
+  image: string;
+  link: string;
+}
 export interface UserDocument extends Document {
   id: string;
   username: string;
   email: string;
   password: string;
-  savedBooks: BookDocument[];
+  savedBooks: Book[];
   isCorrectPassword(password: string): Promise<boolean>;
   bookCount: number;
 }
